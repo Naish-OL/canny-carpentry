@@ -10,10 +10,8 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    esbuildOptions: {
-      supported: {
-        'top-level-await': true
-      }
+    rolldownOptions: {
+      external: ['primevue']
     }
   }
 })
