@@ -4,7 +4,7 @@ import Toolbar from 'primevue/toolbar'
 import Sidebar from 'primevue/sidebar'
 import Button from 'primevue/button'
 import { useRouter } from 'vue-router'
-import CKILogo from '@/assets/CKI.png'
+import CKILogo from '@/assets/CKI.svg'
 
 const router = useRouter()
 const sidebarVisible = ref(false)
@@ -27,7 +27,7 @@ const navigateTo = (routeName) => {
           alt="CKI Logo" 
           class="h-10 md:h-12 w-auto"
         />
-        <span class="hidden sm:inline text-lg font-semibold text-cki-dark">Kitchens & Interiors</span>
+        <span class="hidden sm:inline text-lg font-semibold text-cki-dark">Canny Kitchens & Interiors</span>
       </div>
     </template>
 
