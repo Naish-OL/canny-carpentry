@@ -1,162 +1,188 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import Card from 'primevue/card'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import Message from 'primevue/message'
+import Card from 'primevue/card'
+import { apiClient, type CreateQuotePayload } from '@/services/api'
 
-const formData = ref({
-  name: '',
+const formData = ref<CreateQuotePayload>({
+  customer_name: '',
   email: '',
   phone: '',
-  message: ''
+  job_details: '',
+  job_type: 'carpentry'
 })
 
-const submitStatus = ref(null)
-const isSubmitting = ref(false)
+const loading = ref(false)
+const submitted = ref(false)
+const error = ref<string | null>(null)
 
 const handleSubmit = async () => {
-  isSubmitting.value = true
-  submitStatus.value = null
-
-  // Simulate form submission
-  setTimeout(() => {
-    submitStatus.value = 'success'
+  loading.value = true
+  error.value = null
+  try {
+    await apiClient.createQuote(formData.value)
+    submitted.value = true
+    // Reset form
     formData.value = {
-      name: '',
+      customer_name: '',
       email: '',
       phone: '',
-      message: ''
+      job_details: '',
+      job_type: 'carpentry'
     }
-    isSubmitting.value = false
-
-    // Clear success message after 3 seconds
+    // Hide success message after 3 seconds
     setTimeout(() => {
-      submitStatus.value = null
+      submitted.value = false
     }, 3000)
-  }, 1000)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to submit quote'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <template>
-  <div id="contact" class="py-12 md:py-16 px-4 rounded-2xl" style="background-color: #fff9f5;">
-    <div class="max-w-5xl mx-auto">
-      <h2 class="text-3xl font-bold text-center mb-12 rounded-2xl p-6" style="color: #c17a4f;">
-        Get in Touch
+  <section class="py-16 px-4 bg-gradient-to-b from-orange-50 to-amber-50">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-4xl font-bold text-amber-900 mb-2 text-center">
+        Get a Custom Quote
       </h2>
+      <p class="text-center text-amber-700 mb-12">
+        Tell us about your carpentry project
+      </p>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <!-- Contact Information -->
-        <div class="space-y-8 p-6 rounded-2xl shadow-lg" style="background-color: #faf6f1;">
-          <div>
-            <h3 class="text-xl font-bold mb-4 rounded-lg p-3" style="color: #faf6f1; background-color: #8b6f47;">
-              Contact Information
-            </h3>
-            <div class="space-y-4">
-              <div class="p-3 rounded-lg" style="background-color: #fff9f5; border-left: 4px solid #c17a4f;">
-                <p class="font-bold mb-1" style="color: #8b6f47;">Email</p>
-                <p style="color: #5c4a33;">info@cannycarpentry.com</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- Contact Info -->
+        <div class="space-y-6">
+          <Card class="bg-white rounded-3xl border-2 border-amber-200">
+            <template #content>
+              <div class="space-y-4">
+                <h3 class="text-2xl font-bold text-amber-900">Contact Information</h3>
+                <div class="space-y-3">
+                  <p class="text-amber-700">
+                    <strong>Phone:</strong> (714) 555-WOOD
+                  </p>
+                  <p class="text-amber-700">
+                    <strong>Email:</strong> hello@cannycarpentry.com
+                  </p>
+                  <p class="text-amber-700">
+                    <strong>Address:</strong> Orange County, CA
+                  </p>
+                  <p class="text-amber-700">
+                    <strong>Hours:</strong> Mon-Fri 8am-6pm PST
+                  </p>
+                </div>
               </div>
-              <div class="p-3 rounded-lg" style="background-color: #fff9f5; border-left: 4px solid #c17a4f;">
-                <p class="font-bold mb-1" style="color: #8b6f47;">Phone</p>
-                <p style="color: #5c4a33;">+1 (555) 123-4567</p>
+            </template>
+          </Card>
+
+          <Card class="bg-white rounded-3xl border-2 border-amber-200">
+            <template #content>
+              <div class="space-y-3">
+                <h3 class="text-2xl font-bold text-amber-900">We Specialize In</h3>
+                <ul class="space-y-2 text-amber-700">
+                  <li>✓ Custom Kitchen Cabinets</li>
+                  <li>✓ Built-in Shelving</li>
+                  <li>✓ Doors & Frames</li>
+                  <li>✓ Furniture Design</li>
+                  <li>✓ Restoration Work</li>
+                </ul>
               </div>
-              <div class="p-3 rounded-lg" style="background-color: #fff9f5; border-left: 4px solid #c17a4f;">
-                <p class="font-bold mb-1" style="color: #8b6f47;">Address</p>
-                <p style="color: #5c4a33;">
-                  123 Woodcraft Lane<br>
-                  Carpentry City, CA 90210
-                </p>
-              </div>
-              <div class="p-3 rounded-lg" style="background-color: #fff9f5; border-left: 4px solid #c17a4f;">
-                <p class="font-bold mb-1" style="color: #8b6f47;">Hours</p>
-                <p style="color: #5c4a33;">
-                  Monday - Friday: 9AM - 5PM<br>
-                  Saturday: 10AM - 3PM<br>
-                  Sunday: Closed
-                </p>
-              </div>
-            </div>
-          </div>
+            </template>
+          </Card>
         </div>
 
         <!-- Contact Form -->
-        <div class="space-y-6 p-6 rounded-2xl shadow-lg" style="background-color: #faf6f1;">
-          <Message 
-            v-if="submitStatus === 'success'"
-            severity="success" 
-            text="Thank you! We'll get back to you soon."
-            class="w-full rounded-lg"
-          />
-
+        <div class="bg-white rounded-3xl border-2 border-amber-200 p-8">
           <form @submit.prevent="handleSubmit" class="space-y-6">
+            <!-- Success Message -->
+            <div
+              v-if="submitted"
+              class="p-4 bg-green-100 border-2 border-green-500 rounded-lg text-green-700"
+            >
+              ✓ Quote request submitted! We'll be in touch soon.
+            </div>
+
+            <!-- Error Message -->
+            <div
+              v-if="error"
+              class="p-4 bg-red-100 border-2 border-red-500 rounded-lg text-red-700"
+            >
+              {{ error }}
+            </div>
+
+            <!-- Name -->
             <div>
-              <label for="name" class="block font-bold mb-2 rounded" style="color: #8b6f47;">
-                Full Name
-              </label>
-              <InputText
-                id="name"
-                v-model="formData.name"
-                placeholder="John Doe"
-                class="w-full rounded-lg"
-                style="background-color: #fff9f5; border: 2px solid #e8d7c3; color: #5c4a33;"
+              <label class="block text-amber-900 font-semibold mb-2">Full Name</label>
+              <input
+                v-model="formData.customer_name"
+                type="text"
+                placeholder="John Smith"
                 required
+                class="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 bg-amber-50"
               />
             </div>
 
+            <!-- Email -->
             <div>
-              <label for="email" class="block font-bold mb-2 rounded" style="color: #8b6f47;">
-                Email
-              </label>
-              <InputText
-                id="email"
+              <label class="block text-amber-900 font-semibold mb-2">Email</label>
+              <input
                 v-model="formData.email"
                 type="email"
                 placeholder="john@example.com"
-                class="w-full rounded-lg"
-                style="background-color: #fff9f5; border: 2px solid #e8d7c3; color: #5c4a33;"
                 required
+                class="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 bg-amber-50"
               />
             </div>
 
+            <!-- Phone -->
             <div>
-              <label for="phone" class="block font-bold mb-2 rounded" style="color: #8b6f47;">
-                Phone Number
-              </label>
-              <InputText
-                id="phone"
+              <label class="block text-amber-900 font-semibold mb-2">Phone (Optional)</label>
+              <input
                 v-model="formData.phone"
-                placeholder="+1 (555) 123-4567"
-                class="w-full rounded-lg"
-                style="background-color: #fff9f5; border: 2px solid #e8d7c3; color: #5c4a33;"
+                type="tel"
+                placeholder="(714) 555-1234"
+                class="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 bg-amber-50"
               />
             </div>
 
+            <!-- Job Type -->
             <div>
-              <label for="message" class="block font-bold mb-2 rounded" style="color: #8b6f47;">
-                Message
-              </label>
+              <label class="block text-amber-900 font-semibold mb-2">Project Type</label>
+              <select
+                v-model="formData.job_type"
+                class="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 bg-amber-50 text-amber-900"
+              >
+                <option value="carpentry">General Carpentry</option>
+                <option value="kitchen">Kitchen Cabinets</option>
+              </select>
+            </div>
+
+            <!-- Job Details -->
+            <div>
+              <label class="block text-amber-900 font-semibold mb-2">Project Details</label>
               <textarea
-                id="message"
-                v-model="formData.message"
-                placeholder="Tell us about your project..."
-                rows="5"
-                class="w-full px-3 py-2 rounded-lg"
-                style="background-color: #fff9f5; border: 2px solid #e8d7c3; color: #5c4a33;"
+                v-model="formData.job_details"
+                placeholder="Describe your project, dimensions, materials, and timeline..."
                 required
+                rows="5"
+                class="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 bg-amber-50 resize-none"
               />
             </div>
 
+            <!-- Submit Button -->
             <Button
               type="submit"
-              label="Send Message"
-              class="w-full font-bold rounded-lg"
-              style="background-color: #c17a4f; color: #faf6f1; border: none;"
-              :loading="isSubmitting"
+              label="Get Quote"
+              :loading="loading"
+              class="w-full"
+              style="background-color: #8b6f47; color: white; font-weight: bold; padding: 12px"
+              @click="handleSubmit"
             />
           </form>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>

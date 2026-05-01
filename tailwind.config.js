@@ -7,10 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        'warm-cream': '#fdf6e3',    // your warm cream hex
-        'dark-brown': '#4a2c2a',    // your dark brown hex
-        'warm-tan': '#d2b48c',      // your warm tan hex
-        'accent-wood': '#8b5a2b',   // <-- add your accent wood color
+        'cki-gray': '#A8A8A8',
+        'cki-sage': '#99B8A3',
+        'cki-beige': '#F5E9E5',
+        'cki-dark': '#333333',
+        'cki-dark-charcoal': '#1a1a1a',
       },
     },
   },

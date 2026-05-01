@@ -1,19 +1,16 @@
 <script setup>
 import Navigation from './components/Navigation.vue'
-import LandingPage from './components/LandingPage.vue'
-import ECommerceSection from './components/ECommerceSection.vue'
-import ContactSection from './components/ContactSection.vue'
 import Footer from './components/Footer.vue'
 </script>
 
 <template>
-  <Navigation />
-  <div id="landing">
-    <LandingPage />
+  <div class="min-h-screen flex flex-col bg-white">
+    <Navigation />
+    <main class="flex-grow">
+      <RouterView />
+    </main>
+    <Footer />
   </div>
-  <ECommerceSection />
-  <ContactSection />
-  <Footer />
 </template>
 
 <style scoped>

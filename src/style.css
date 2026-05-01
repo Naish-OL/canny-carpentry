@@ -14,11 +14,13 @@
 
 /* Global styles */
 body {
-  @apply bg-warm-cream text-dark-brown;
+  background-color: var(--warm-cream);
+  color: var(--dark-brown);
+  box-sizing: border-box;
 }
 
 * {
-  @apply box-border;
+  box-sizing: border-box;
 }
 
 /* Smooth scrolling */
@@ -28,24 +30,45 @@ html {
 
 /* PrimeVue customizations */
 :deep(.p-inputtext) {
-  @apply w-full px-3 py-2 border-2 border-warm-tan rounded-xl bg-white text-dark-brown focus:border-accent-wood focus:outline-none transition-colors;
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--warm-tan);
+  border-radius: 0.75rem;
+  background-color: #fff9f5;
+  color: var(--dark-brown);
+  transition: all 0.3s ease;
+}
+
+:deep(.p-inputtext:focus) {
+  border-color: var(--accent-wood);
+  outline: none;
 }
 
 :deep(.p-inputtextarea) {
-  @apply w-full px-3 py-2 border-2 border-warm-tan rounded-xl bg-white text-dark-brown focus:border-accent-wood focus:outline-none transition-colors;
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--warm-tan);
+  border-radius: 0.75rem;
+  background-color: #fff9f5;
+  color: var(--dark-brown);
+  transition: all 0.3s ease;
+}
+
+:deep(.p-inputtextarea:focus) {
+  border-color: var(--accent-wood);
+  outline: none;
 }
 
 :deep(.p-button) {
-  @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 :deep(.p-card) {
-  @apply rounded-2xl shadow-lg;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(92, 74, 51, 0.1);
   background-color: #fff9f5 !important;
-}
-
-/* Smooth shadows for depth */
-:deep(.p-card) {
-  box-shadow: 0 4px 20px rgba(92, 74, 51, 0.1) !important;
 }
 

@@ -1,236 +1,205 @@
-<script setup>
-import { ref, computed } from 'vue'
-import Button from 'primevue/button'
-import Dropdown from 'primevue/dropdown'
-import Sidebar from 'primevue/sidebar'
-import Divider from 'primevue/divider'
-import ProductCard from './ProductCard.vue'
-
-// Mock product data
-const products = ref([
-  {
-    id: 1,
-    name: 'Wooden Dining Table',
-    description: 'Beautiful oak dining table with natural finish',
-    price: 899.99,
-    category: 'Furniture',
-    image: 'https://via.placeholder.com/300x200?text=Dining+Table',
-    inStock: true
-  },
-  {
-    id: 2,
-    name: 'Handcrafted Chair',
-    description: 'Comfortable wooden chair with cushioned seat',
-    price: 349.99,
-    category: 'Furniture',
-    image: 'https://via.placeholder.com/300x200?text=Chair',
-    inStock: true
-  },
-  {
-    id: 3,
-    name: 'Coffee Table',
-    description: 'Modern coffee table with storage compartment',
-    price: 549.99,
-    category: 'Furniture',
-    image: 'https://via.placeholder.com/300x200?text=Coffee+Table',
-    inStock: true
-  },
-  {
-    id: 4,
-    name: 'Wall Shelves',
-    description: 'Set of 3 floating wooden shelves',
-    price: 199.99,
-    category: 'Decor',
-    image: 'https://via.placeholder.com/300x200?text=Shelves',
-    inStock: true
-  },
-  {
-    id: 5,
-    name: 'Bed Frame',
-    description: 'Solid wood bed frame (Queen size)',
-    price: 1299.99,
-    category: 'Furniture',
-    image: 'https://via.placeholder.com/300x200?text=Bed+Frame',
-    inStock: false
-  },
-  {
-    id: 6,
-    name: 'Desk',
-    description: 'Spacious wooden desk for home office',
-    price: 699.99,
-    category: 'Furniture',
-    image: 'https://via.placeholder.com/300x200?text=Desk',
-    inStock: true
-  }
-])
-
-const selectedCategory = ref('All')
-const cartItems = ref([])
-const cartVisible = ref(false)
-
-const categories = computed(() => {
-  const cats = ['All', ...new Set(products.value.map(p => p.category))]
-  return cats.map(c => ({ label: c, value: c }))
-})
-
-const filteredProducts = computed(() => {
-  if (selectedCategory.value === 'All') {
-    return products.value
-  }
-  return products.value.filter(p => p.category === selectedCategory.value)
-})
-
-const cartTotal = computed(() => {
-  return cartItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-})
-
-const cartCount = computed(() => {
-  return cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
-})
-
-const handleAddToCart = (product) => {
-  const existingItem = cartItems.value.find(item => item.id === product.id)
-  if (existingItem) {
-    existingItem.quantity += product.quantity
-  } else {
-    cartItems.value.push(product)
-  }
-}
-
-const removeFromCart = (productId) => {
-  cartItems.value = cartItems.value.filter(item => item.id !== productId)
-}
-
-const updateQuantity = (productId, newQuantity) => {
-  const item = cartItems.value.find(item => item.id === productId)
-  if (item) {
-    item.quantity = Math.max(1, newQuantity)
-  }
-}
-</script>
-
 <template>
-  <div id="ecommerce" class="py-12 md:py-16 px-4 rounded-2xl" style="background-color: #fff9f5;">
+  <section class="py-16 px-4 bg-gradient-to-b from-amber-50 to-orange-50">
     <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-12">
-        <h2 class="text-3xl font-bold rounded-lg p-4" style="color: #c17a4f;">
-          Our Products
-        </h2>
-        <Button
-          icon="pi pi-shopping-cart"
-          class="font-bold rounded-lg"
-          style="background-color: #c17a4f; color: #faf6f1; border: none;"
-          :label="`Cart (${cartCount})`"
-          @click="cartVisible = true"
-        />
-      </div>
+      <h2 class="text-4xl font-bold text-amber-900 mb-2 text-center">
+        Handcrafted Products
+      </h2>
+      <p class="text-center text-amber-700 mb-12">
+        Browse our collection of custom carpentry pieces
+      </p>
 
       <!-- Category Filter -->
-      <div class="mb-8 p-4 rounded-2xl" style="background-color: #faf6f1;">
-        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <p class="font-bold" style="color: #8b6f47;">Filter by:</p>
-          <Dropdown
-            v-model="selectedCategory"
-            :options="categories"
-            option-label="label"
-            option-value="value"
-            class="w-full sm:w-48 rounded-lg"
-            style="background-color: #fff9f5; border: 2px solid #e8d7c3; color: #5c4a33;"
-          />
-        </div>
+      <div class="mb-8 flex flex-wrap gap-3 justify-center">
+        <button
+          v-for="cat in ['All', 'Tables', 'Shelving', 'Cabinets', 'Doors']"
+          :key="cat"
+          @click="selectedCategory = cat === 'All' ? '' : cat"
+          :class="[
+            'px-6 py-2 rounded-full font-semibold transition-all duration-300',
+            (!selectedCategory && cat === 'All') || selectedCategory === cat
+              ? 'bg-amber-700 text-white shadow-lg'
+              : 'bg-white text-amber-700 border-2 border-amber-700 hover:bg-amber-100'
+          ]"
+        >
+          {{ cat }}
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="text-center py-12">
+        <p class="text-amber-700 text-lg">Loading products...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="text-center py-12">
+        <p class="text-red-600 text-lg">{{ error }}</p>
+        <button
+          @click="fetchProducts"
+          class="mt-4 px-6 py-2 bg-amber-700 text-white rounded-full hover:bg-amber-800"
+        >
+          Retry
+        </button>
       </div>
 
       <!-- Products Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
         <ProductCard
           v-for="product in filteredProducts"
           :key="product.id"
-          v-bind="product"
-          @add-to-cart="handleAddToCart"
+          :product="product"
+          @add-to-cart="addToCart"
         />
       </div>
 
       <!-- Empty State -->
-      <div v-if="filteredProducts.length === 0" class="text-center py-12 rounded-2xl p-6" style="background-color: #faf6f1;">
-        <h3 class="text-lg" style="color: #8b6f47;">
-          No products found in this category
-        </h3>
+      <div v-if="filteredProducts.length === 0" class="text-center py-12">
+        <p class="text-amber-700 text-lg">No products found in this category</p>
       </div>
-    </div>
 
-    <!-- Shopping Cart Sidebar -->
-    <Sidebar v-model:visible="cartVisible" position="right" style="width: 100%; max-width: 500px; background-color: #faf6f1;">
-      <div class="p-6 h-full flex flex-col">
-        <h2 class="text-2xl font-bold mb-6 rounded-lg p-3" style="color: #faf6f1; background-color: #8b6f47;">Shopping Cart</h2>
-        
-        <div class="flex-1 overflow-y-auto space-y-4">
-          <!-- Cart Items -->
-          <div v-if="cartItems.length > 0" class="space-y-4">
+      <!-- Shopping Cart Drawer -->
+      <Sidebar v-model:visible="showCart" position="right" style-class="bg-white">
+        <template #header>
+          <h3 class="text-2xl font-bold text-amber-900">Shopping Cart</h3>
+        </template>
+
+        <div v-if="cart.length === 0" class="p-6 text-center">
+          <p class="text-amber-700">Your cart is empty</p>
+        </div>
+
+        <div v-else class="p-6">
+          <div class="space-y-4 mb-6">
             <div
-              v-for="item in cartItems"
+              v-for="item in cart"
               :key="item.id"
-              class="rounded-lg p-4"
-              style="border: 2px solid #e8d7c3; background-color: #fff9f5;"
+              class="flex items-center justify-between bg-amber-50 p-4 rounded-lg"
             >
-              <div class="flex justify-between mb-2">
-                <h4 class="font-bold text-lg" style="color: #8b6f47;">
-                  {{ item.name }}
-                </h4>
-                <Button
-                  icon="pi pi-times"
-                  class="p-button-rounded p-button-text rounded-lg"
-                  style="color: #c17a4f;"
-                  @click="removeFromCart(item.id)"
-                />
+              <div class="flex-1">
+                <p class="font-semibold text-amber-900">{{ item.name }}</p>
+                <p class="text-sm text-amber-700">${{ item.price }}</p>
               </div>
-              <p class="mb-2" style="color: #5c4a33;">
-                ${{ item.price.toFixed(2) }}
-              </p>
               <div class="flex items-center gap-2">
-                <Button
-                  icon="pi pi-minus"
-                  class="p-button-sm p-button-text rounded-lg"
-                  style="color: #8b6f47;"
-                  @click="updateQuantity(item.id, item.quantity - 1)"
-                />
-                <p class="min-w-8 text-center" style="color: #5c4a33;">{{ item.quantity }}</p>
-                <Button
-                  icon="pi pi-plus"
-                  class="p-button-sm p-button-text rounded-lg"
-                  style="color: #8b6f47;"
-                  @click="updateQuantity(item.id, item.quantity + 1)"
-                />
-                <p class="ml-auto font-bold" style="color: #c17a4f;">
-                  ${{ (item.price * item.quantity).toFixed(2) }}
-                </p>
+                <button
+                  @click="updateCartQuantity(item.id, item.quantity - 1)"
+                  class="px-2 py-1 bg-amber-200 text-amber-900 rounded hover:bg-amber-300"
+                >
+                  -
+                </button>
+                <span class="px-3 text-amber-900 font-semibold">
+                  {{ item.quantity }}
+                </span>
+                <button
+                  @click="updateCartQuantity(item.id, item.quantity + 1)"
+                  class="px-2 py-1 bg-amber-200 text-amber-900 rounded hover:bg-amber-300"
+                >
+                  +
+                </button>
               </div>
+              <button
+                @click="removeFromCart(item.id)"
+                class="ml-2 px-3 py-1 bg-red-200 text-red-700 rounded hover:bg-red-300"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
-          <!-- Empty Cart Message -->
-          <div v-else class="text-center py-8 rounded-lg" style="background-color: #fff9f5;">
-            <p style="color: #8b6f47;">Your cart is empty</p>
-          </div>
-        </div>
-
-        <!-- Cart Summary -->
-        <div class="mt-6 space-y-4">
-          <Divider style="border-color: #e8d7c3;" />
-          <div class="flex justify-between text-lg font-bold">
-            <p style="color: #8b6f47;">Total:</p>
-            <p style="color: #c17a4f;">${{ cartTotal.toFixed(2) }}</p>
+          <div class="border-t-2 border-amber-200 pt-4 mb-6">
+            <div class="flex justify-between mb-4">
+              <span class="font-semibold text-amber-900">Subtotal:</span>
+              <span class="font-bold text-amber-900">${{ cartTotal }}</span>
+            </div>
           </div>
 
-          <!-- Checkout Button -->
           <Button
-            v-if="cartItems.length > 0"
             label="Proceed to Checkout"
-            class="w-full font-bold rounded-lg"
-            style="background-color: #8b6f47; color: #faf6f1; border: none;"
+            class="w-full"
+            style="background-color: #8b6f47; color: white"
+            @click="proceedToCheckout"
           />
         </div>
-      </div>
-    </Sidebar>
-  </div>
+      </Sidebar>
+
+      <!-- Cart Toggle Button -->
+      <button
+        @click="showCart = true"
+        class="fixed bottom-8 right-8 bg-amber-700 text-white px-6 py-3 rounded-full shadow-lg hover:bg-amber-800 transition-all flex items-center gap-2"
+      >
+        🛒 Cart ({{ cartItemCount }})
+      </button>
+    </div>
+  </section>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import Button from 'primevue/button'
+import Sidebar from 'primevue/sidebar'
+import ProductCard from './ProductCard.vue'
+import { apiClient, type Product } from '@/services/api'
+
+const products = ref<Product[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+const selectedCategory = ref('')
+const showCart = ref(false)
+const cart = ref<Array<Product & { quantity: number }>>([])
+
+const filteredProducts = computed(() => {
+  if (!selectedCategory.value) return products.value
+  return products.value.filter(p =>
+    p.name.toLowerCase().includes(selectedCategory.value.toLowerCase())
+  )
+})
+
+const cartTotal = computed(() =>
+  cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)
+)
+
+const cartItemCount = computed(() =>
+  cart.value.reduce((sum, item) => sum + item.quantity, 0)
+)
+
+const fetchProducts = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    products.value = await apiClient.getProducts({ inStock: true })
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load products'
+    console.error('Error fetching products:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+const addToCart = (product: Product) => {
+  const existingItem = cart.value.find(item => item.id === product.id)
+  if (existingItem) {
+    existingItem.quantity++
+  } else {
+    cart.value.push({ ...product, quantity: 1 })
+  }
+}
+
+const updateCartQuantity = (id: string, quantity: number) => {
+  if (quantity <= 0) {
+    removeFromCart(id)
+  } else {
+    const item = cart.value.find(item => item.id === id)
+    if (item) item.quantity = quantity
+  }
+}
+
+const removeFromCart = (id: string) => {
+  cart.value = cart.value.filter(item => item.id !== id)
+}
+
+const proceedToCheckout = () => {
+  alert(`Proceeding to checkout with ${cartItemCount.value} items totaling $${cartTotal.value}`)
+  // TODO: Integrate with payment provider
+}
+
+onMounted(() => {
+  fetchProducts()
+})
+</script>
