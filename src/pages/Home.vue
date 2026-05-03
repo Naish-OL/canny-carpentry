@@ -34,6 +34,17 @@ const navigateTo = (routeName) => {
 };
 </script>
 
+<style scoped>
+.service-card-wrapper {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.service-card-wrapper:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+              0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+</style>
+
 <template>
   <!-- Hero Section -->
   <section class="bg-cki-sage text-cki-dark py-16 md:py-24 px-4">
@@ -69,39 +80,50 @@ const navigateTo = (routeName) => {
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card
+        <div
           v-for="service in services"
           :key="service.title"
-          class="service-card border-0 transition-all duration-300 cursor-pointer"
-          :style="{ backgroundColor: '#F5E9E5', borderRadius: '1rem' }"
+          class="service-card-wrapper cursor-pointer transition-all duration-300 border-0"
+          :style="{ borderRadius: '1rem' }"
+          @click="navigateTo(service.routeName)"
         >
-          <template #header>
-            <div class="flex justify-center pt-10 pb-4">
-              <div
-                class="w-20 h-20 rounded-full flex items-center justify-center shadow-md"
-                style="background-color: #99b8a3"
-              >
-                <i :class="service.icon" class="text-3xl" style="color: #ffffff"></i>
+          <Card
+            class="service-card border-0 h-full"
+            :style="{ backgroundColor: '#F5E9E5', borderRadius: '1rem' }"
+          >
+            <template #header>
+              <div class="flex justify-center pt-10 pb-4">
+                <div
+                  class="w-20 h-20 rounded-full flex items-center justify-center shadow-md"
+                  style="background-color: #99b8a3"
+                >
+                  <i :class="service.icon" class="text-3xl" style="color: #ffffff"></i>
+                </div>
               </div>
-            </div>
-          </template>
+            </template>
 
-          <div class="text-center px-4">
-            <h3 class="text-2xl font-bold text-cki-dark mb-4">{{ service.title }}</h3>
-            <p class="text-cki-dark opacity-80 leading-relaxed">
-              {{ service.description }}
-            </p>
-            <Button
-              label="Learn More"
-              class="p-button-text font-semibold mt-6"
-              style="color: #333333"
-              icon="pi pi-arrow-right"
-              iconPos="right"
-              @click="navigateTo(service.routeName)"
-            />
-          </div>
-        </Card>
+            <template #content>
+              <div class="text-center px-4">
+                <h3 class="text-2xl font-bold text-cki-dark mb-4">
+                  {{ service.title }}
+                </h3>
+                <p class="text-cki-dark opacity-80 leading-relaxed">
+                  {{ service.description }}
+                </p>
+                <Button
+                  label="Learn More"
+                  class="p-button-text font-semibold mt-6"
+                  style="color: #333333"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  @click.stop
+                />
+              </div>
+            </template>
+          </Card>
+        </div>
       </div>
+
     </div>
   </section>
 

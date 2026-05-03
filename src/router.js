@@ -30,6 +30,21 @@ const routes = [
     path: '/product/:id',
     name: 'ProductDetail',
     component: () => import('./pages/ProductDetail.vue')
+  },
+  {
+    path: '/services/custom-kitchens',
+    name: 'ServiceCustomKitchens',
+    component: () => import('./pages/services/ServiceCustomKitchens.vue')
+  },
+  {
+    path: '/services/interior-design',
+    name: 'ServiceInteriorDesign',
+    component: () => import('./pages/services/ServiceInteriorDesign.vue')
+  },
+  {
+    path: '/services/premium-surfaces',
+    name: 'ServicePremiumSurfaces',
+    component: () => import('./pages/services/ServicePremiumSurfaces.vue')
   }
 ]
 
