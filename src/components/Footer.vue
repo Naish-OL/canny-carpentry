@@ -54,8 +54,8 @@ const currentYear = new Date().getFullYear()
           <div class="space-y-2 text-sm">
             <p>
               <strong>Email:</strong><br />
-              <a href="mailto:solidsurfaces@cki.ie" class="hover:opacity-70 transition-opacity">
-                solidsurfaces@cki.ie
+              <a href="mailto:info@cki.ie" class="hover:opacity-70 transition-opacity">
+                info@cki.ie
               </a>
             </p>
             <p>
