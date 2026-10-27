@@ -64,7 +64,8 @@ class ApiClient {
   async getProductById(id: string): Promise<Product> {
     const response = await fetch(`${this.baseUrl}/api/products/${id}`)
     if (!response.ok) {
-      if (response.status === 404) {
+      // 400 means the id isn't a valid UUID, which is just as missing as an unknown id
+      if (response.status === 404 || response.status === 400) {
         throw new Error('Product not found')
       }
       throw new Error(`Failed to fetch product: ${response.statusText}`)

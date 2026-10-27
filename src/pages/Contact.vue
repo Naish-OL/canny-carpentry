@@ -3,9 +3,21 @@ import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
+import Message from 'primevue/message'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { apiClient } from '@/services/api'
 
-const formData = ref({
+const route = useRoute()
+
+const projectTypes = {
+  kitchen: 'Custom Kitchen',
+  interior: 'Interior Design',
+  surfaces: 'Premium Surfaces',
+  other: 'Other'
+}
+
+const emptyForm = () => ({
   name: '',
   email: '',
   phone: '',
@@ -13,18 +25,46 @@ const formData = ref({
   projectType: ''
 })
 
-const submitted = ref(false)
+const formData = ref(emptyForm())
 
-const handleSubmit = () => {
-  // In a real app, this would send data to the backend
-  console.log('Form submitted:', formData.value)
-  submitted.value = true
-  
-  // Reset form after 3 seconds
-  setTimeout(() => {
-    submitted.value = false
-    formData.value = { name: '', email: '', phone: '', message: '', projectType: '' }
-  }, 3000)
+// Arriving from a product's "Request Quote" button pre-fills the enquiry
+if (route.query.product) {
+  formData.value.projectType = 'surfaces'
+  formData.value.message = `I'd like a quote for: ${route.query.product}\n\n`
+}
+
+const loading = ref(false)
+const submitted = ref(false)
+const error = ref(null)
+
+const handleSubmit = async () => {
+  loading.value = true
+  error.value = null
+  submitted.value = false
+
+  // The API only accepts 'kitchen' or 'carpentry' as job_type, so keep the
+  // chosen project type in the details to avoid losing it
+  const { projectType } = formData.value
+  const details = projectType
+    ? `Project type: ${projectTypes[projectType]}\n\n${formData.value.message}`
+    : formData.value.message
+
+  try {
+    await apiClient.createQuote({
+      customer_name: formData.value.name.trim(),
+      email: formData.value.email.trim(),
+      phone: formData.value.phone.trim() || undefined,
+      job_details: details.trim(),
+      job_type: projectType === 'kitchen' ? 'kitchen' : 'carpentry'
+    })
+    submitted.value = true
+    formData.value = emptyForm()
+  } catch (err) {
+    console.error('Error submitting enquiry:', err)
+    error.value = 'Something went wrong sending your message. Please check your details and try again, or give us a call.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -96,9 +136,13 @@ const handleSubmit = () => {
           <h2 class="text-3xl font-bold text-cki-dark mb-8">Send Us a Message</h2>
           
           <Card class="shadow-lg border-0" style="background-color: #F5E9E5;">
-            <div v-if="submitted" class="bg-green-100 text-green-800 p-4 rounded-lg mb-6">
+            <Message v-if="submitted" severity="success" class="mb-6" closable @close="submitted = false">
               Thank you for your message! We'll be in touch soon.
-            </div>
+            </Message>
+
+            <Message v-if="error" severity="error" class="mb-6" closable @close="error = null">
+              {{ error }}
+            </Message>
 
             <form @submit.prevent="handleSubmit" class="space-y-6">
               <!-- Name -->
@@ -165,6 +209,7 @@ const handleSubmit = () => {
               <Button
                 type="submit"
                 label="Send Message"
+                :loading="loading"
                 class="w-full p-button-lg"
                 style="background-color: #99B8A3; color: #333333;"
               />
