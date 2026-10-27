@@ -1,106 +1,77 @@
 <script setup>
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import DataView from 'primevue/dataview'
 import Dropdown from 'primevue/dropdown'
-import { ref } from 'vue'
+import InputText from 'primevue/inputtext'
+import Checkbox from 'primevue/checkbox'
+import Message from 'primevue/message'
+import ProgressSpinner from 'primevue/progressspinner'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { apiClient } from '@/services/api'
+import { formatPrice } from '@/utils/format'
 
+const router = useRouter()
+
+const products = ref([])
+const loading = ref(false)
+const error = ref(null)
+
+const search = ref('')
+const inStockOnly = ref(false)
 const sortBy = ref(null)
-const selectedCategory = ref(null)
-
-const categories = [
-  { label: 'All Categories', value: null },
-  { label: 'Wood', value: 'wood' },
-  { label: 'Tile', value: 'tile' },
-  { label: 'Solid Acrylic', value: 'acrylic' }
-]
 
 const sortOptions = [
+  { label: 'Newest', value: null },
   { label: 'Name (A-Z)', value: 'name' },
-  { label: 'Price (Low-High)', value: 'price' }
+  { label: 'Price (Low-High)', value: 'price-asc' },
+  { label: 'Price (High-Low)', value: 'price-desc' }
 ]
 
-// Sample products - replace with API call
-const products = ref([
-  {
-    id: 1,
-    name: 'Oak Kitchen Countertop',
-    category: 'wood',
-    price: '£1,200',
-    image: 'https://via.placeholder.com/300x200?text=Oak+Countertop',
-    description: 'Premium oak wood countertop with natural finish'
-  },
-  {
-    id: 2,
-    name: 'Ceramic Backsplash Tile',
-    category: 'tile',
-    price: '£450',
-    image: 'https://via.placeholder.com/300x200?text=Ceramic+Tile',
-    description: 'Beautiful ceramic tiles perfect for kitchen backsplash'
-  },
-  {
-    id: 3,
-    name: 'Acrylic Bathroom Surround',
-    category: 'acrylic',
-    price: '£2,500',
-    image: 'https://via.placeholder.com/300x200?text=Acrylic+Surround',
-    description: 'Seamless solid acrylic shower surround'
-  },
-  {
-    id: 4,
-    name: 'Walnut Feature Wall',
-    category: 'wood',
-    price: '£1,800',
-    image: 'https://via.placeholder.com/300x200?text=Walnut+Wall',
-    description: 'Stunning walnut wood feature wall panels'
-  },
-  {
-    id: 5,
-    name: 'Porcelain Floor Tiles',
-    category: 'tile',
-    price: '£680',
-    image: 'https://via.placeholder.com/300x200?text=Porcelain+Tiles',
-    description: 'High-quality porcelain flooring tiles'
-  },
-  {
-    id: 6,
-    name: 'Acrylic Kitchen Island',
-    category: 'acrylic',
-    price: '£3,200',
-    image: 'https://via.placeholder.com/300x200?text=Acrylic+Island',
-    description: 'Custom designed acrylic kitchen island with integrated seating'
+const fetchProducts = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    products.value = await apiClient.getProducts()
+  } catch (err) {
+    console.error('Error fetching products:', err)
+    error.value = 'We couldn\'t load our products right now. Please try again shortly.'
+  } finally {
+    loading.value = false
   }
-])
+}
 
-const filteredProducts = ref(products.value)
-
-const filterProducts = () => {
+const filteredProducts = computed(() => {
+  const term = search.value.trim().toLowerCase()
   let filtered = products.value
 
-  if (selectedCategory.value) {
-    filtered = filtered.filter(p => p.category === selectedCategory.value)
+  if (term) {
+    filtered = filtered.filter(p =>
+      p.name.toLowerCase().includes(term) ||
+      p.size_dimensions.toLowerCase().includes(term)
+    )
+  }
+
+  if (inStockOnly.value) {
+    filtered = filtered.filter(p => p.stock > 0)
   }
 
   if (sortBy.value === 'name') {
     filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
-  } else if (sortBy.value === 'price') {
-    filtered = [...filtered].sort((a, b) => {
-      const priceA = parseInt(a.price.replace(/[£,]/g, ''))
-      const priceB = parseInt(b.price.replace(/[£,]/g, ''))
-      return priceA - priceB
-    })
+  } else if (sortBy.value === 'price-asc') {
+    filtered = [...filtered].sort((a, b) => Number(a.price) - Number(b.price))
+  } else if (sortBy.value === 'price-desc') {
+    filtered = [...filtered].sort((a, b) => Number(b.price) - Number(a.price))
   }
 
-  filteredProducts.value = filtered
+  return filtered
+})
+
+const requestQuote = (product) => {
+  router.push({ name: 'Contact', query: { product: product.name } })
 }
 
-const handleCategoryChange = () => {
-  filterProducts()
-}
-
-const handleSortChange = () => {
-  filterProducts()
-}
+onMounted(fetchProducts)
 </script>
 
 <template>
@@ -110,27 +81,25 @@ const handleSortChange = () => {
       <div class="max-w-6xl mx-auto">
         <h1 class="text-4xl font-bold mb-4">Shop Our Products</h1>
         <p class="text-lg opacity-90">
-          Explore our selection of wood, tile, and solid acrylic surfaces
+          Explore our selection of premium surfaces
         </p>
       </div>
     </section>
 
     <!-- Filters Section -->
     <section class="bg-cki-beige py-8 px-4 border-b border-cki-gray">
-      <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 items-center">
+      <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 md:items-end">
         <div class="w-full md:w-1/2">
-          <label class="block text-sm font-semibold text-cki-dark mb-2">Category</label>
-          <Dropdown
-            v-model="selectedCategory"
-            :options="categories"
-            optionLabel="label"
-            optionValue="value"
+          <label for="product-search" class="block text-sm font-semibold text-cki-dark mb-2">Search</label>
+          <InputText
+            id="product-search"
+            v-model="search"
+            placeholder="Search by name or size"
             class="w-full"
-            @change="handleCategoryChange"
           />
         </div>
 
-        <div class="w-full md:w-1/2">
+        <div class="w-full md:w-1/3">
           <label class="block text-sm font-semibold text-cki-dark mb-2">Sort By</label>
           <Dropdown
             v-model="sortBy"
@@ -138,8 +107,12 @@ const handleSortChange = () => {
             optionLabel="label"
             optionValue="value"
             class="w-full"
-            @change="handleSortChange"
           />
+        </div>
+
+        <div class="flex items-center gap-2 md:pb-2">
+          <Checkbox v-model="inStockOnly" inputId="in-stock-only" binary />
+          <label for="in-stock-only" class="text-sm font-semibold text-cki-dark">In stock only</label>
         </div>
       </div>
     </section>
@@ -147,38 +120,73 @@ const handleSortChange = () => {
     <!-- Products Grid -->
     <section class="py-16 px-4">
       <div class="max-w-6xl mx-auto">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Card 
-            v-for="product in filteredProducts"
-            :key="product.id"
-            class="shadow-lg border-0 hover:shadow-xl transition-shadow"
-            :style="{ backgroundColor: '#F5E9E5' }"
-          >
-            <template #header>
-              <img :src="product.image" :alt="product.name" class="w-full h-48 object-cover" />
-            </template>
-
-            <h3 class="text-xl font-bold text-cki-dark mb-2">{{ product.name }}</h3>
-            <p class="text-cki-dark opacity-80 mb-4 text-sm">{{ product.description }}</p>
-            
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-2xl font-bold text-cki-sage">{{ product.price }}</span>
-              <span class="px-3 py-1 rounded-full text-sm font-semibold" :style="{ backgroundColor: '#99B8A3', color: '#333333' }">
-                {{ product.category }}
-              </span>
-            </div>
-
-            <Button 
-              label="Request Quote"
-              class="w-full"
-              style="background-color: #99B8A3; color: #333333;"
-            />
-          </Card>
+        <div v-if="loading" class="flex justify-center py-12">
+          <ProgressSpinner aria-label="Loading products" />
         </div>
 
-        <div v-if="filteredProducts.length === 0" class="text-center py-12">
-          <p class="text-cki-dark text-lg">No products found. Please adjust your filters.</p>
+        <div v-else-if="error" class="flex flex-col items-center gap-4 py-12">
+          <Message severity="error" :closable="false">{{ error }}</Message>
+          <Button
+            label="Try Again"
+            icon="pi pi-refresh"
+            style="background-color: #99B8A3; color: #333333;"
+            @click="fetchProducts"
+          />
         </div>
+
+        <template v-else>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card
+              v-for="product in filteredProducts"
+              :key="product.id"
+              class="shadow-lg border-0 hover:shadow-xl transition-shadow"
+              :style="{ backgroundColor: '#F5E9E5' }"
+            >
+              <template #content>
+                <RouterLink
+                  :to="{ name: 'ProductDetail', params: { id: product.id } }"
+                  class="block hover:opacity-80 transition-opacity"
+                >
+                  <h3 class="text-xl font-bold text-cki-dark mb-2">{{ product.name }}</h3>
+                </RouterLink>
+                <p class="text-cki-dark opacity-80 mb-4 text-sm">{{ product.size_dimensions }}</p>
+
+                <div class="flex justify-between items-center mb-4">
+                  <span class="text-2xl font-bold text-cki-dark">{{ formatPrice(product.price) }}</span>
+                  <span
+                    class="px-3 py-1 rounded-full text-sm font-semibold"
+                    :style="product.stock > 0
+                      ? { backgroundColor: '#99B8A3', color: '#333333' }
+                      : { backgroundColor: '#A8A8A8', color: '#1a1a1a' }"
+                  >
+                    {{ product.stock > 0 ? 'In stock' : 'Out of stock' }}
+                  </span>
+                </div>
+
+                <div class="flex gap-3">
+                  <Button
+                    label="Details"
+                    class="flex-1 p-button-outlined"
+                    style="border-color: #333333; color: #333333;"
+                    @click="router.push({ name: 'ProductDetail', params: { id: product.id } })"
+                  />
+                  <Button
+                    label="Request Quote"
+                    class="flex-1"
+                    style="background-color: #99B8A3; color: #333333;"
+                    @click="requestQuote(product)"
+                  />
+                </div>
+              </template>
+            </Card>
+          </div>
+
+          <div v-if="filteredProducts.length === 0" class="text-center py-12">
+            <p class="text-cki-dark text-lg">
+              {{ products.length === 0 ? 'No products are available right now.' : 'No products found. Please adjust your filters.' }}
+            </p>
+          </div>
+        </template>
       </div>
     </section>
   </div>
