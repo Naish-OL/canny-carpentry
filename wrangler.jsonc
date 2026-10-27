@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Worker name connected to this repo in the Cloudflare dashboard
+  "name": "canny-carpentry",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for unknown paths so Vue Router history routes work on reload
+    "not_found_handling": "single-page-application"
+  }
+}
